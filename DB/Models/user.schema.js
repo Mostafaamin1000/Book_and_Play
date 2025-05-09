@@ -29,7 +29,11 @@ const schema = new Schema({
         type: String,
         enum: ['player','owner'],
         default: 'player'
-    }
+    },
+    match: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Match'
+    }]
 }, {
     timestamps: true
 });
@@ -44,4 +48,4 @@ schema.pre('findOneAndUpdate',function(){
     if(this._update.password)  this._update.password =bcrypt.hashSync(this._update.password , 10)
     })
 schema.index({ location: '2dsphere' });
-export const User = model('User', schema);
+export const User= model('User', schema);

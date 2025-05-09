@@ -15,6 +15,20 @@ const schema = new Schema({
     max_players: Number,
     current_players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     status: { type: String, enum: ['open', 'full', 'completed'], default: 'open' },
+  },{timestamps:true,
+    toJSON:{virtuals:true}
   });
+
+
+//   schema.virtual('players', {
+//     ref:"User",
+//     localField:"_id",
+//     foreignField:"match"
+// })
+
+// schema.pre(/^find/,function (){
+//     this.populate('players');
+//     })
+
   schema.index({ location: '2dsphere' });
   export const Match = model('Match', schema);

@@ -11,11 +11,7 @@ res.status(201).json({ message: "Match added successfully", match });
 });
 
 const getMatches = catchError(async (req, res, next) => {
-    let apiFeatures = new ApiFeatures(Match.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
+    let apiFeatures = new ApiFeatures(Match.find().populate(['current_players','organizerId'],'name email'), req.query).pagination()
 const match = await apiFeatures.mongooseQuery;
 res.status(200).json({ message: "Matches found successfully",page:apiFeatures.pageNumber ,match });
 });
