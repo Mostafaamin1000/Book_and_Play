@@ -13,9 +13,16 @@ const schema = new Schema({
         type: String,
         required: true
     },
+    phone: {
+        type: String
+    },
+    city: {
+        type: String,
+        required: true
+    },
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], required: true }, // [lng, lat]
+        coordinates: { type: [Number] }, // [lng, lat]
       },
       preferred_distance: Number, // e.g. 500 (meters)
     role: {
