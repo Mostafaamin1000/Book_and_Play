@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
+import dotenv from 'dotenv'
+dotenv.config()
 import { catchError } from '../../middlewares/catchError.js'
 import { User } from '../../../DB/Models/user.schema.js'
 import { AppError } from '../../utils/appError.js'
@@ -15,8 +17,8 @@ const signup =catchError( async(req,res,next)=>{
 const signin =catchError( async(req,res,next)=>{
     let user =await User.findOne({email : req.body.email})
     if(!user) return next(new AppError('Email or Password incorrect ..',404))
-    let match = bcrypt.compareSync(req.body.password , user.password )
-    if(!match) return next(new AppError('Email or Password incorrect ..',404))
+    let match = bcrypt.compare(req.body.password , user.password )
+    if(!match) return next(new AppError('Email or Password incorrect...',404))
 jwt.sign({userId:user._id , name:user.name, role:user.role }, process.env.SECRET_KEY , (err,token)=>{
     res.status(200).json({message:"Login Successfully  ..", token, user }  )
 })})

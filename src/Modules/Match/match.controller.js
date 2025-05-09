@@ -1,5 +1,7 @@
+import { application } from "express";
 import { Match } from "../../../DB/Models/match.schema.js";
 import { catchError } from "../../middlewares/catchError.js";
+import { ApiFeatures } from "../../utils/apiFeature.js";
 import { AppError } from "../../utils/appError.js";
 
 
@@ -9,8 +11,13 @@ res.status(201).json({ message: "Match added successfully", match });
 });
 
 const getMatches = catchError(async (req, res, next) => {
-const match = await Match.find();
-res.status(200).json({ message: "Matches found successfully", match });
+    let apiFeatures = new ApiFeatures(Match.find(), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+const match = await apiFeatures.mongooseQuery;
+res.status(200).json({ message: "Matches found successfully",page:apiFeatures.pageNumber ,match });
 });
 
 const getMatchbyId = catchError(async (req, res, next) => {
