@@ -2,7 +2,11 @@ import mongoose ,{Schema,model} from 'mongoose';
 
 const schema = new Schema({ 
     organizerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    time: Date,
+    date: Date,
+    time: {
+      start: { type: String, required: true }, 
+      end: { type: String, required: true }, 
+    },
     location: {
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], required: true }, // [lng, lat]
