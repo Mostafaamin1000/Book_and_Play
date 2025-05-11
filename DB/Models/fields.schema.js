@@ -2,7 +2,9 @@ import mongoose,{Schema,model} from 'mongoose';
 
 const schema = new Schema({
     name: String,
-    address: String,
+    city: String,
+    country: String,
+    capacity: Number,
     is_paid: Boolean,
     price_per_hour: Number,
     location: {
