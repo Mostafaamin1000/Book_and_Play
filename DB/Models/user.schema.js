@@ -16,7 +16,7 @@ const schema = new Schema({
     phone: {
         type: String
     },
-    city: {
+    Country: {
         type: String,
         required: true
     },
