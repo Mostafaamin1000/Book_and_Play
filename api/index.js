@@ -16,7 +16,7 @@ app.use(cors());
 
 bootstrap(app);
 
-app.use((req, res, next) => {
+app.all('*',(req, res, next) => {
   next(new AppError(`route not found ${req.originalUrl}`, 404));
 });
 

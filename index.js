@@ -16,7 +16,9 @@ app.use('/uploads', express.static('uploads'));
 app.use(cors())
 bootstrap(app)
 
-
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "API is running ✅" });
+});
 //! for unfound Routes 
 app.use((req,res,next)=>{
     next(new AppError (`route not found ${req.originalUrl}`, 404))
