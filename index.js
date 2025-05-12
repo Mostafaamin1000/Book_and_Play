@@ -11,7 +11,7 @@ import { dbConnection } from './DB/db.connection.js';
 dotenv.config()
 const app = express()
 const port =process.env.PORT ||  3000
-dbConnection
+dbConnection()
 app.use(express.json())
 app.use('/uploads', express.static('uploads'));
 app.use(cors())
