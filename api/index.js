@@ -8,7 +8,7 @@ import { bootstrap } from '../src/Modules/bootstrap.js';
 import { dbConnection } from '../DB/db.connection.js';
 
 dotenv.config();
-
+dbConnection
 const app = express();
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
