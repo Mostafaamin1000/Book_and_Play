@@ -2,6 +2,7 @@ import mongoose,{Schema,model} from 'mongoose';
 
 const schema = new Schema({
     name: String,
+    image: String,
     city: String,
     country: String,
     capacity: Number,
@@ -11,6 +12,16 @@ const schema = new Schema({
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], required: true }, // [lng, lat]
     },
+    location_info : String,
+    amenities:[{
+      parking: Boolean,
+      ball_rent:Boolean,
+      toilets: Boolean,
+      changing_rooms: Boolean,
+      cafeteria:Boolean,
+      lighting_quality: Boolean,
+      field_quality: Boolean
+    }]
   });
   schema.index({ location: '2dsphere' });
   export const Field = model('Field', schema);
