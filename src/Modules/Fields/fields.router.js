@@ -8,7 +8,7 @@ fieldRouter.post('/create',protectedRouter,allowTo('owner'),uploadSinleFile('ima
 fieldRouter.get('/allfields',getAllFields)
 fieldRouter.get('/near',protectedRouter,allowTo('player'),getNearbyFields)
 fieldRouter.get('/:id',getFieldById)
-fieldRouter.put('/update/:id',protectedRouter,allowTo('owner'),updateField)
+fieldRouter.put('/update/:id',protectedRouter,allowTo('owner'),uploadSinleFile('image','field'),updateField)
 fieldRouter.delete('/delete/:id',protectedRouter,allowTo('owner'),deleteField)
 
 

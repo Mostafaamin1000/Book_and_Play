@@ -35,6 +35,7 @@ field || next (new AppError("field not found", 404));
 });
 
 const updateField = catchError(async (req, res, next) => {
+ if(req.file) req.body.image=req.file.filename
 const field = await Field.findByIdAndUpdate(req.params.id, req.body, {new: true});
 field || next (new AppError("field not found", 404));
 !field || res.status(200).json({ message: "field updated", field });
