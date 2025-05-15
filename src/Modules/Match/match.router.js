@@ -10,7 +10,7 @@ matchRouter.get('/available', getAvailableMatches);
 matchRouter.get('/allmatches', getMatches);
 matchRouter.get('/:id', getMatchbyId);
 matchRouter.put('/update/:id', updateMatch);
-matchRouter.delete('/:id/unjoin', unjoinMatch);
+matchRouter.delete('/:id/unjoin',protectedRouter, allowTo('player') , unjoinMatch);
 matchRouter.delete('/delete/:id', deleteMatch);
 
 

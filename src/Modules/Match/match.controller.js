@@ -6,17 +6,14 @@ import { AppError } from "../../utils/appError.js";
 
 
 const addMatch = catchError(async (req, res, next) => {
- const { date, time, fieldId, location, max_players } = req.body;
-
+ const { date, time, fieldId, location, max_players } = req.body
   const match = await Match.create({
     date,
     time,
     fieldId,
     location,
     max_players,
-    current_players: [req.user._id]
-  });
-
+    current_players: [req.user._id]})
   res.status(201).json({ message: "Match created successfully", match });
 })
 
@@ -54,26 +51,19 @@ const unjoinMatch = catchError(async (req, res, next) => {
   })
 })
 
+//! get all time slots of matches that are not full
 const getAvailableMatches = catchError(async (req, res, next) => {
   const { date, fieldId } = req.query;
-
   if (!date || !fieldId) {
-    return next(new AppError("Date and Field ID are required", 400));
-  }
+    return next(new AppError("Date and Field ID are required", 400))}
   const matches = await Match.find({
     fieldId,
-    date: new Date(date), 
-    $expr: {
-      $lt: [{ $size: "$current_players" }, "$max_players"]
-    }
+    date: new Date(date),
+    $expr: { $lt: [{ $size: "$current_players" }, "$max_players"]}
   }).populate("current_players", "name phone");
-
   res.status(200).json({
-    message: "Available matches for selected date and field",
-    matches,
-  });
-});
-
+    message: "Available matches for selected date and field", matches  })
+})
 
 
 //! will use in User bookings 
