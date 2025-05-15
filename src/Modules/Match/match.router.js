@@ -13,6 +13,4 @@ matchRouter.put('/update/:id', updateMatch);
 matchRouter.delete('/:id/unjoin',protectedRouter, allowTo('player') , unjoinMatch);
 matchRouter.delete('/delete/:id', deleteMatch);
 
-
-
 export default matchRouter;
