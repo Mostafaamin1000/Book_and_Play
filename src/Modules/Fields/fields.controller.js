@@ -14,6 +14,19 @@ const fields = await Field.find();
 res.status(200).json({ message: "fields", fields });
 });
 
+
+const getNearbyFields = catchError(async (req, res, next) => {
+  const user = req.user;
+  if (!user?.location?.coordinates || user.location.coordinates.length !== 2) {
+      return next(new AppError('User location not available' , 400))}
+  const preferredDistance = user.preferred_distance || 1000
+  const fields = await Field.find({
+    location: { $near: { $geometry: {type: "Point", coordinates: user.location.coordinates},
+        $maxDistance: preferredDistance}}})
+  res.status(200).json({ message: "Nearby fields", fields })
+})
+
+
 const getFieldById = catchError(async (req, res, next) => {
 const field = await Field.findById(req.params.id);
 field || next (new AppError("field not found", 404));
@@ -32,4 +45,4 @@ field || next (new AppError("field not found", 404));
 !field || res.status(200).json({ message: "field deleted", field });
 });
 
-export { addField, getAllFields, getFieldById, updateField, deleteField };
+export { addField, getAllFields, getFieldById, updateField, deleteField , getNearbyFields };
