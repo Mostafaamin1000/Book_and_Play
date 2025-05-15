@@ -5,6 +5,12 @@ import { AppError } from "../../utils/appError.js";
 
 const addField = catchError(async (req, res, next) => {
  if(req.file) req.body.image=req.file.filename
+   req.body.is_paid = req.body.is_paid === 'true' || req.body.is_paid === true;
+  if (!req.body.is_paid) {
+    req.body.price_per_hour = 0 }
+     else { if (!req.body.price_per_hour) {
+      return next(new AppError('Price per hour is required for paid fields.', 400))}
+          }
 const field = new Field(req.body);
 await field.save();
 res.status(201).json({ message: "field added", field });
