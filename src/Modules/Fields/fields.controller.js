@@ -4,6 +4,7 @@ import { AppError } from "../../utils/appError.js";
 
 
 const addField = catchError(async (req, res, next) => {
+ if(req.file) req.body.image=req.file.filename
 const field = new Field(req.body);
 await field.save();
 res.status(201).json({ message: "field added", field });

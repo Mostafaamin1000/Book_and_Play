@@ -23,5 +23,9 @@ const schema = new Schema({
       field_quality: Boolean
     }]
   });
+  
+schema.post('init',function (doc){
+if(doc.image) doc.image = "https://book-and-play.vercel.app/uploads/field/" + doc.image
+})
   schema.index({ location: '2dsphere' });
   export const Field = model('Field', schema);

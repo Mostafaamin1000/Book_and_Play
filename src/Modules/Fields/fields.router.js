@@ -1,9 +1,10 @@
 import {Router} from 'express';
 import { addField, deleteField, getAllFields, getFieldById, getNearbyFields, updateField } from './fields.controller.js';
 import { allowTo, protectedRouter } from '../auth/auth.controller.js';
+import { uploadSinleFile } from '../../fileUpload/fileUpload.js';
 
 const fieldRouter = Router(); 
-fieldRouter.post('/create',protectedRouter,allowTo('owner'),addField)
+fieldRouter.post('/create',protectedRouter,allowTo('owner'),uploadSinleFile('image','field'),addField)
 fieldRouter.get('/allfields',getAllFields)
 fieldRouter.get('/near',protectedRouter,allowTo('player'),getNearbyFields)
 fieldRouter.get('/:id',getFieldById)
