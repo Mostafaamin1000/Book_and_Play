@@ -3,9 +3,26 @@ import { catchError } from "../../middlewares/catchError.js";
 import { ApiFeatures } from "../../utils/apiFeature.js";
 import { AppError } from "../../utils/appError.js";
 
+// Helper function to reset matches after a week
+const resetOldMatches = async () => {
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const matches = await Match.find({ date: { $lte: oneWeekAgo } });
+
+  for (let match of matches) {
+    match.current_players = [];
+    match.status = 'open';
+    await match.save();
+  }
+}
+
 
 const addMatch = catchError(async (req, res, next) => {
  const { date, time, fieldId, location, max_players } = req.body
+
+  // Run cleanup of old matches before adding new one
+  await resetOldMatches()
   const match = await Match.create({
     date,
     time,
