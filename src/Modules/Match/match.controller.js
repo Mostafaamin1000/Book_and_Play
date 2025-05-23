@@ -91,7 +91,7 @@ const getUserMatches = catchError(async (req, res, next) => {
 
 //! will use in recommende matches
 const getMatches = catchError(async (req, res, next) => {
-    let apiFeatures = new ApiFeatures(Match.find().populate(['current_players','organizerId'],'-_id name email phone'), req.query).pagination()
+    let apiFeatures = new ApiFeatures(Match.find().populate(['current_players'],'-_id name email phone'), req.query).pagination()
 const match = await apiFeatures.mongooseQuery;
 res.status(200).json({ message: "Matches found successfully",page:apiFeatures.pageNumber ,match });
 });
