@@ -7,8 +7,8 @@ matchRouter.post('/create',protectedRouter, allowTo('player', 'owner') ,addMatch
 matchRouter.post('/:id/join',protectedRouter, allowTo('player') , joinMatch);
 
 matchRouter.get('/available', getAvailableMatches);
-matchRouter.get('/:userId', getUserMatches);
 matchRouter.get('/allmatches', getMatches);
+matchRouter.get('/:userId', getUserMatches);
 matchRouter.get('/:id', getMatchbyId);
 
 matchRouter.put('/update/:id', updateMatch);
