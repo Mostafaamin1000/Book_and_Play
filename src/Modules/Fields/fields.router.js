@@ -7,6 +7,7 @@ const fieldRouter = Router();
 fieldRouter.post('/create',protectedRouter,allowTo('owner'),uploadSinleFile('image','field'),addField)
 fieldRouter.get('/allfields',getAllFields)
 fieldRouter.get('/near',protectedRouter,allowTo('player'),getNearbyFields)
+fieldRouter.get('/search-place', protectedRouter, allowTo('owner','player'), searchPlace);
 fieldRouter.get('/:id',getFieldById)
 fieldRouter.put('/update/:id',protectedRouter,allowTo('owner'),uploadSinleFile('image','field'),updateField)
 fieldRouter.delete('/delete/:id',protectedRouter,allowTo('owner'),deleteField)
