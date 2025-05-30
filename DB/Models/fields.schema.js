@@ -21,7 +21,11 @@ const schema = new Schema({
       cafeteria:Boolean,
       lighting_quality: Boolean,
       field_quality: Boolean
-    }]
+    }],
+    owner: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'User',
+  required: true}
   });
   
 schema.post('init',function (doc){

@@ -39,10 +39,21 @@ const searchPlace = catchError(async (req, res, next) => {
       else { if (!req.body.price_per_hour) {
         return next(new AppError('Price per hour is required for paid fields.', 400))}
             }
+      req.body.owner = req.user._id;
   const field = new Field(req.body);
   await field.save();
   res.status(201).json({ message: "field added", field });
   }); 
+
+const getFieldsByOwner = catchError(async (req, res, next) => {
+  const ownerId = req.user._id; 
+  const fields = await Field.find({ owner: ownerId });
+  res.status(200).json({
+    message: "Fields by this owner",
+    fields
+  });
+});
+
 
   const getAllFields = catchError(async (req, res, next) => {
   const fields = await Field.find();
@@ -81,4 +92,4 @@ const searchPlace = catchError(async (req, res, next) => {
   !field || res.status(200).json({ message: "field deleted", field });
   });
 
-  export { addField, getAllFields, getFieldById, updateField, deleteField , getNearbyFields ,searchPlace};
+  export { addField, getAllFields, getFieldById, updateField, deleteField , getNearbyFields ,searchPlace , getFieldsByOwner};
