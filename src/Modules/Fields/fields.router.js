@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import { addField, deleteField, getAllFields, getFieldById, getNearbyFields, updateField } from './fields.controller.js';
+import { addField, deleteField, getAllFields, getFieldById, getNearbyFields, searchPlace, updateField } from './fields.controller.js';
 import { allowTo, protectedRouter } from '../auth/auth.controller.js';
 import { uploadSinleFile } from '../../fileUpload/fileUpload.js';
 
