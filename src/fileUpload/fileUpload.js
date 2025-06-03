@@ -1,5 +1,5 @@
-import multer from 'multer'
-import{v4 as uuidv4} from 'uuid'
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 
 const fileUpload =(folderName)=>{
     const storage = multer.diskStorage({
@@ -30,3 +30,4 @@ export const uploadSinleFile = (fieldName,folderName)=>{
 export const uploadMixOFFiles = (arrayOfFields,folderName)=>{
     return fileUpload(folderName).fields(arrayOfFields)
 }
+

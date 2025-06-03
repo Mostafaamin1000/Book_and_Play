@@ -2,6 +2,7 @@
   import { catchError } from "../../middlewares/catchError.js";
   import { AppError } from "../../utils/appError.js";
   import axios from "axios";
+  import cloudinary from "../../utils/cloudnairy.js";
   import dotenv from "dotenv";
   dotenv.config();
 
@@ -31,19 +32,26 @@ const searchPlace = catchError(async (req, res, next) => {
   res.status(200).json({ message: "Places found", places });
 });
 
-  const addField = catchError(async (req, res, next) => {
-  if(req.file) req.body.image=req.file.filename
-    req.body.is_paid = req.body.is_paid === 'true' || req.body.is_paid === true;
-    if (!req.body.is_paid) {
-      req.body.price_per_hour = 0 }
-      else { if (!req.body.price_per_hour) {
-        return next(new AppError('Price per hour is required for paid fields.', 400))}
-            }
-      req.body.owner = req.user._id;
+ const addField = catchError(async (req, res, next) => {
+  if (req.file) req.body.image = req.file.path;
+  req.body.is_paid = req.body.is_paid === 'true' || req.body.is_paid === true;
+  if (!req.body.is_paid) {
+    req.body.price_per_hour = 0;
+  } else {
+    if (!req.body.price_per_hour) {
+      return next(new AppError('Price per hour is required for paid fields.', 400))}}
+  req.body.owner = req.user._id;
+  if (typeof req.body.location === 'string') {
+    req.body.location = JSON.parse(req.body.location)}
+
+  if (typeof req.body.amenities === 'string') {
+   req.body.amenities = JSON.parse(req.body.amenities)}
   const field = new Field(req.body);
   await field.save();
-  res.status(201).json({ message: "field added", field });
-  }); 
+  res.status(201).json({
+    message: "field added",field});
+});
+
 
 const getFieldsByOwner = catchError(async (req, res, next) => {
   const ownerId = req.user._id; 
@@ -79,12 +87,17 @@ const getFieldsByOwner = catchError(async (req, res, next) => {
   !field || res.status(200).json({ message: "field : ", field });
   });
 
-  const updateField = catchError(async (req, res, next) => {
-  if(req.file) req.body.image=req.file.filename
-  const field = await Field.findByIdAndUpdate(req.params.id, req.body, {new: true});
-  field || next (new AppError("field not found", 404));
-  !field || res.status(200).json({ message: "field updated", field });
-  });
+const updateField = catchError(async (req, res, next) => {
+  if (typeof req.body.location === 'string') {
+    req.body.location = JSON.parse(req.body.location)}
+  if (typeof req.body.amenities === 'string') {
+    req.body.amenities = JSON.parse(req.body.amenities)}
+  if (req.file && req.file.path) {
+    req.body.image = req.file.path;  }
+const field = await Field.findByIdAndUpdate(req.params.id, req.body, { new: true });
+ if (!field) {return next(new AppError("field not found", 404));}
+  res.status(200).json({ message: "field updated", field });
+});
 
   const deleteField = catchError(async (req, res, next) => { 
   const field = await Field.findByIdAndDelete(req.params.id);
@@ -92,4 +105,9 @@ const getFieldsByOwner = catchError(async (req, res, next) => {
   !field || res.status(200).json({ message: "field deleted", field });
   });
 
-  export { addField, getAllFields, getFieldById, updateField, deleteField , getNearbyFields ,searchPlace , getFieldsByOwner};
+  const uploadTest = catchError(async (req, res, next) => {
+    const data = await cloudinary.api.ping();
+    res.json({ data });
+  });
+
+  export { addField, getAllFields, getFieldById, updateField, deleteField , getNearbyFields ,searchPlace , getFieldsByOwner , uploadTest};
