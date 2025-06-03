@@ -2,7 +2,6 @@
   import { catchError } from "../../middlewares/catchError.js";
   import { AppError } from "../../utils/appError.js";
   import axios from "axios";
-  import cloudinary from "../../utils/cloudnairy.js";
   import dotenv from "dotenv";
   dotenv.config();
 
@@ -80,7 +79,6 @@ const getFieldsByOwner = catchError(async (req, res, next) => {
     res.status(200).json({ message: "Nearby fields", fields })
   })
 
-
   const getFieldById = catchError(async (req, res, next) => {
   const field = await Field.findById(req.params.id);
   field || next (new AppError("field not found", 404));
@@ -105,9 +103,14 @@ const field = await Field.findByIdAndUpdate(req.params.id, req.body, { new: true
   !field || res.status(200).json({ message: "field deleted", field });
   });
 
-  const uploadTest = catchError(async (req, res, next) => {
-    const data = await cloudinary.api.ping();
-    res.json({ data });
-  });
 
-  export { addField, getAllFields, getFieldById, updateField, deleteField , getNearbyFields ,searchPlace , getFieldsByOwner , uploadTest};
+  export { 
+     addField,
+     getAllFields,
+     getFieldById,
+     updateField,
+     deleteField,
+     getNearbyFields,
+     searchPlace,
+     getFieldsByOwner
+    }

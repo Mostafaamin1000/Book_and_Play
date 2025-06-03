@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import { allowTo, protectedRouter } from '../auth/auth.controller.js';
-import { addField, deleteField, getAllFields, getFieldById, getFieldsByOwner, getNearbyFields, searchPlace, updateField, uploadTest } from './fields.controller.js';
+import { addField, deleteField, getAllFields, getFieldById, getFieldsByOwner, getNearbyFields, searchPlace, updateField } from './fields.controller.js';
 import { uploadSingleFileCloud } from '../../middlewares/uploadCloud.js';
 
 const fieldRouter = Router(); 
 fieldRouter.post('/create',protectedRouter,allowTo('owner'),uploadSingleFileCloud('image'),addField)
 fieldRouter.get('/allfields',getAllFields)
-fieldRouter.get('/test',uploadTest)
 fieldRouter.get('/near',protectedRouter,allowTo('player'),getNearbyFields)
 fieldRouter.get('/search-place', protectedRouter, allowTo('owner','player'), searchPlace);
 fieldRouter.get('/my-fields', protectedRouter, allowTo('owner'), getFieldsByOwner);
