@@ -4,13 +4,13 @@ import { addField, deleteField, getAllFields, getFieldById, getFieldsByOwner, ge
 import { uploadSingleFileCloud } from '../../middlewares/uploadCloud.js';
 
 const fieldRouter = Router(); 
-fieldRouter.post('/create',protectedRouter,allowTo('owner'),uploadSingleFileCloud('image'),addField)
+fieldRouter.post('/create',protectedRouter,allowTo('owner'),uploadSingleFileCloud('image','field'),addField)
 fieldRouter.get('/allfields',getAllFields)
 fieldRouter.get('/near',protectedRouter,allowTo('player'),getNearbyFields)
 fieldRouter.get('/search-place', protectedRouter, allowTo('owner','player'), searchPlace);
 fieldRouter.get('/my-fields', protectedRouter, allowTo('owner'), getFieldsByOwner);
 fieldRouter.get('/:id',getFieldById)
-fieldRouter.put('/update/:id',protectedRouter,allowTo('owner'),uploadSingleFileCloud('image'),updateField)
+fieldRouter.put('/update/:id',protectedRouter,allowTo('owner'),uploadSingleFileCloud('image','field'),updateField)
 fieldRouter.delete('/delete/:id',protectedRouter,allowTo('owner'),deleteField)
 
 
