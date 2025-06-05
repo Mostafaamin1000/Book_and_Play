@@ -41,7 +41,58 @@ const createTeam = catchError(async (req, res, next) => {
       createdAt: team.createdAt }})
 })
 
+const getTeamsByTournament = catchError(async (req, res, next) => {
+  const { tournamentId } = req.params
+  const tournament = await Tournament.findById(tournamentId).populate('teams');
+  if (!tournament) {
+    return next(new AppError('Tournament not found', 404))}
+
+  res.status(200).json({
+    message: 'Teams in tournament',
+    teams: tournament.teams})
+})
+
+const getTeamById = catchError(async (req, res, next) => {
+  const team = await Team.findById(req.params.id)
+    .populate('members', 'name email') 
+    .populate('tournament', 'name');
+
+  if (!team) {
+    return next(new AppError('Team not found', 404)) }
+  res.status(200).json({ message: 'Team data', team });
+});
+
+const updateTeam = catchError(async (req, res, next) => {
+  const team = await Team.findById(req.params.id);
+  if (!team) return next(new AppError('Team not found', 404));
+
+  if (team.createdBy.toString() !== req.user._id.toString()) {
+    return next(new AppError('You are not allowed to update this team', 403)) }
+
+  if (req.file) req.body.logo = req.file.path  
+  const updatedTeam = await Team.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.status(200).json({ message: 'Team updated successfully', team: updatedTeam });
+})
+
+const deleteTeam = catchError(async (req, res, next) => {
+  const team = await Team.findById(req.params.id);
+  if (!team) return next(new AppError('Team not found', 404));
+
+  if (team.createdBy.toString() !== req.user._id.toString()) {
+    return next(new AppError('You are not allowed to delete this team', 403)) }
+
+  await Tournament.findByIdAndUpdate(team.tournament, {
+    $pull: { teams: team._id },
+  });
+  await team.deleteOne();
+  res.status(200).json({ message: 'Team deleted successfully' });
+});
+
 
 export {
      createTeam,
+     getTeamsByTournament,
+     getTeamById,
+     updateTeam,
+     deleteTeam
  };
