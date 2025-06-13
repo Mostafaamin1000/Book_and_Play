@@ -41,6 +41,75 @@ const createTeam = catchError(async (req, res, next) => {
       createdAt: team.createdAt }})
 })
 
+const addMemberToTeam = catchError(async (req, res, next) => {
+  const { teamId, memberId } = req.body;
+  const userId = req.user._id;
+
+  const team = await Team.findById(teamId).populate("tournament");
+  if (!team) return next(new AppError("Team not found", 404));
+
+  if (team.createdBy.toString() !== userId.toString()) {
+    return next(new AppError("Only the team creator can add members", 403))}
+
+  if (team.members.includes(memberId)) {
+    return next(new AppError("User is already in the team", 400))}
+
+  const existingTeam = await Team.findOne({
+    tournament: team.tournament._id,
+    members: memberId})
+  if (existingTeam) {
+    return next(new AppError("User already joined a team in this tournament", 400));
+  }
+
+  const MAX_MEMBERS =7;
+  if (team.members.length >= MAX_MEMBERS) {
+    return next(new AppError("Team is already full", 400))}
+
+  team.members.push(memberId);
+  await team.save();
+
+  res.status(200).json({
+    message: "Member added successfully",
+    team,
+  });
+});
+
+const removeMemberFromTeam = catchError(async (req, res, next) => {
+  const { teamId, memberId } = req.body;
+  const userId = req.user._id;
+
+  const team = await Team.findById(teamId);
+  if (!team) return next(new AppError("Team not found", 404));
+
+  const isCreator = team.createdBy.toString() === userId.toString();
+  const isRemovingSelf = memberId.toString() === userId.toString();
+
+  if (!team.members.includes(memberId)) {
+    return next(new AppError("User is not a member of the team", 400));
+  }
+
+  if (!isCreator && !isRemovingSelf) {
+    return next(new AppError("You are not allowed to remove this member", 403));
+  }
+
+  if (isCreator && isRemovingSelf) {
+    return next(new AppError("Team creator cannot leave their own team", 400)) }
+
+  team.members = team.members.filter(
+    (id) => id.toString() !== memberId.toString()
+  );
+  await team.save();
+
+  res.status(200).json({
+    message: isRemovingSelf
+      ? "You have left the team successfully"
+      : "Member removed successfully",
+    team,
+  });
+});
+
+
+
 const getTeamsByTournament = catchError(async (req, res, next) => {
   const { tournamentId } = req.params
   const tournament = await Tournament.findById(tournamentId).populate('teams');
@@ -91,6 +160,8 @@ const deleteTeam = catchError(async (req, res, next) => {
 
 export {
      createTeam,
+     addMemberToTeam,
+     removeMemberFromTeam,
      getTeamsByTournament,
      getTeamById,
      updateTeam,

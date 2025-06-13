@@ -1,4 +1,6 @@
+import { Team } from "../../../DB/Models/team.schema.js";
 import { Tournament } from "../../../DB/Models/tournament.schema.js";
+import { TournamentMatch } from "../../../DB/Models/TournamentMatch.schema.js";
 import { catchError } from "../../middlewares/catchError.js";
 import { AppError } from "../../utils/appError.js";
 
@@ -58,6 +60,50 @@ const registerTeamToTournament = catchError(async (req, res, next) => {
 });
 
 
+const getTournamentDetails = catchError(async (req, res, next) => {
+  const { id } = req.params;
+
+  const tournament = await Tournament.findById(id)
+    .populate({
+      path: 'teams',  
+      select: 'name logo members',
+    })
+    .populate('createdBy', 'name');
+
+  if (!tournament) {
+    return next(new AppError('Tournament not found', 404));
+  }
+  let winnerTeam = null;
+  if (tournament.status === 'finished') {
+    const finalMatch = await TournamentMatch.findOne({
+      tournament: tournament._id,
+      round: 'final',
+      status: 'played',
+    }).populate('winner', 'name logo');
+
+    if (finalMatch && finalMatch.winner) {
+      winnerTeam = finalMatch.winner;
+    }
+  }
+
+  res.status(200).json({
+    tournament: {
+      _id: tournament._id,
+      name: tournament.name,
+      description: tournament.description,
+      start_date: tournament.start_date,
+      end_date: tournament.end_date,
+      max_teams: tournament.max_teams,
+      is_private: tournament.is_private,
+      institution: tournament.institution,
+      createdBy: tournament.createdBy,
+      status: tournament.status,
+      teams: tournament.teams,
+      winner: winnerTeam,
+    }
+  });
+});
+
 const getTournamentById = catchError(async (req, res, next) => {
   const tournament = await Tournament.findById(req.params.id)
     .populate('field_ids')
@@ -104,6 +150,7 @@ const deleteTournament = catchError(async (req, res, next) => {
 export{
     createTournament,
     registerTeamToTournament,
+    getTournamentDetails,
     getTournamentById,
     getAllTournaments,
     updateTournament,
