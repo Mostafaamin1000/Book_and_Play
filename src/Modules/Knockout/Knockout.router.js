@@ -4,7 +4,7 @@ import { allowTo, protectedRouter } from '../auth/auth.controller.js';
 
 const knockoutRouter = Router();
 //! start the tournament
-knockoutRouter.post('/tournament/:tournamentId/start', protectedRouter, allowTo('owner'), markTournamentOngoing);
+knockoutRouter.patch('/tournament/:tournamentId/start', protectedRouter, allowTo('owner'), markTournamentOngoing);
 knockoutRouter.post('/tournament/:tournamentId/generate-first-round', startTournament);
 //! update the match result
 knockoutRouter.patch('/match/:matchId/result',protectedRouter , allowTo('owner') ,updateMatchResult);
