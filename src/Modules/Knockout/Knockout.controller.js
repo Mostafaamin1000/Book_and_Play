@@ -57,18 +57,34 @@ const generateFirstRound = catchError(async (tournamentId, times, userId) => {
   const createdMatches = await TournamentMatch.insertMany(matches);
   return createdMatches;
 });
-
 const startTournament = catchError(async (req, res, next) => {
   const { tournamentId } = req.params;
   const { times } = req.body;
+  const userId = req.user._id;
 
-  const matches = await generateFirstRound(tournamentId, times, req.user._id);
+  const tournament = await Tournament.findById(tournamentId);
+  if (!tournament) throw new AppError('Tournament not found', 404);
+
+  if (String(tournament.createdBy) !== String(userId)) {
+    throw new AppError('You are not authorized to modify this tournament', 403);
+  }
+
+  if (tournament.status !== 'upcoming') {
+    throw new AppError(`Tournament is already ${tournament.status}`, 400);
+  }
+
+  const matches = await generateFirstRound(tournamentId, times, userId);
+
+  tournament.status = 'ongoing';
+  await tournament.save();
 
   res.status(200).json({
-    message: 'First round created with custom match times',
+    message: 'Tournament started successfully',
+    status: tournament.status,
     matches
   });
 });
+
 
 
 //! for owner to update match result
