@@ -3,58 +3,73 @@ import { TournamentMatch } from "../../../DB/Models/TournamentMatch.schema.js";
 import { catchError } from "../../middlewares/catchError.js";
 import { AppError } from "../../utils/appError.js";
 
-
-const generateFirstRound =catchError( async (tournamentId, time) => {
-   const tournament = await Tournament.findById(tournamentId).populate('teams');
+const generateFirstRound = catchError(async (tournamentId, times, userId) => {
+  const tournament = await Tournament.findById(tournamentId).populate('teams');
 
   if (!tournament) throw new AppError('Tournament not found', 404);
-
   if (String(tournament.createdBy) !== String(userId)) {
-    throw new AppError('You are not authorized to modify this tournament', 403)}
+    throw new AppError('You are not authorized to modify this tournament', 403);
+  }
+  if (!tournament.field_ids || tournament.field_ids.length === 0) {
+    throw new AppError('No fields associated with this tournament', 400);
+  }
 
   const teams = tournament.teams;
-
   if (![4, 8, 16].includes(teams.length)) {
-    throw new AppError('Number of teams must be 4, 8, or 16', 400)}
+    throw new AppError('Number of teams must be 4, 8, or 16', 400);
+  }
+
+  const numberOfMatches = teams.length / 2;
+
+  if (!Array.isArray(times) || times.length !== numberOfMatches) {
+    throw new AppError(`You must provide ${numberOfMatches} match times`, 400);
+  }
 
   const roundMap = {
     4: 'semifinal',
     8: 'quarterfinal',
-    16: 'round_16'}
-  const firstRound = roundMap[teams.length];
+    16: 'round_16'
+  };
 
+  const firstRound = roundMap[teams.length];
   const shuffledTeams = teams.sort(() => Math.random() - 0.5);
+
   const matches = [];
   for (let i = 0; i < shuffledTeams.length; i += 2) {
     const teamA = shuffledTeams[i];
     const teamB = shuffledTeams[i + 1];
+    const matchTime = times[i / 2]; 
+
     matches.push({
       tournament: tournament._id,
       round: firstRound,
-      fieldId: tournament.field_ids[0], // ممكن تطور التوزيع لاحقًا
+      fieldId: tournament.field_ids[0],
       date: tournament.start_date,
       time: {
-        start: time.start,
-        end: time.end},
+        start: matchTime.start,
+        end: matchTime.end
+      },
       teamA: teamA._id,
       teamB: teamB._id
-    })}
+    });
+  }
 
   const createdMatches = await TournamentMatch.insertMany(matches);
   return createdMatches;
-})
+});
 
 const startTournament = catchError(async (req, res, next) => {
   const { tournamentId } = req.params;
-  const { time } = req.body;
+  const { times } = req.body;
 
-  const matches = await generateFirstRound(tournamentId, time, req.user._id);
+  const matches = await generateFirstRound(tournamentId, times, req.user._id);
 
   res.status(200).json({
-    message: 'First round created successfully',
+    message: 'First round created with custom match times',
     matches
   });
 });
+
 
 //! for owner to update match result
 const updateMatchResult = catchError(async (req, res, next) => {

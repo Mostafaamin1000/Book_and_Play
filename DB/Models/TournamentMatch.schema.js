@@ -10,8 +10,8 @@ const tournamentMatchSchema = new Schema({
   fieldId: { type: Schema.Types.ObjectId, ref: 'Field', required: true },
   date: { type: Date, required: true },
   time: {
-    start: { type: String, required: true },
-    end: { type: String, required: true }
+    start:{ type: String, required: true },
+    end:{ type: String, required: true }
   },
   teamA: { type: Schema.Types.ObjectId, ref: 'Team', required: true },
   teamB: { type: Schema.Types.ObjectId, ref: 'Team', required: true },
