@@ -3,6 +3,32 @@ import { TournamentMatch } from "../../../DB/Models/TournamentMatch.schema.js";
 import { catchError } from "../../middlewares/catchError.js";
 import { AppError } from "../../utils/appError.js";
 
+const markTournamentOngoing = catchError(async (req, res, next) => {
+  const { tournamentId } = req.params;
+  const userId = req.user._id;
+
+  const tournament = await Tournament.findById(tournamentId);
+  if (!tournament) throw new AppError('Tournament not found', 404);
+
+  if (String(tournament.createdBy) !== String(userId)) {
+    throw new AppError('You are not authorized to modify this tournament', 403);
+  }
+
+  if (tournament.status !== 'upcoming') {
+    throw new AppError(`Tournament is already ${tournament.status}`, 400);
+  }
+
+  tournament.status = 'ongoing';
+  await tournament.save();
+
+  res.status(200).json({
+    message: 'Tournament status updated to ongoing',
+    status: tournament.status
+  });
+});
+
+
+
 const generateFirstRound = catchError(async (tournamentId, times, userId) => {
   const tournament = await Tournament.findById(tournamentId).populate('teams');
 
@@ -57,34 +83,18 @@ const generateFirstRound = catchError(async (tournamentId, times, userId) => {
   const createdMatches = await TournamentMatch.insertMany(matches);
   return createdMatches;
 });
+
 const startTournament = catchError(async (req, res, next) => {
   const { tournamentId } = req.params;
   const { times } = req.body;
-  const userId = req.user._id;
 
-  const tournament = await Tournament.findById(tournamentId);
-  if (!tournament) throw new AppError('Tournament not found', 404);
-
-  if (String(tournament.createdBy) !== String(userId)) {
-    throw new AppError('You are not authorized to modify this tournament', 403);
-  }
-
-  if (tournament.status !== 'upcoming') {
-    throw new AppError(`Tournament is already ${tournament.status}`, 400);
-  }
-
-  const matches = await generateFirstRound(tournamentId, times, userId);
-
-  tournament.status = 'ongoing';
-  await tournament.save();
+  const matches = await generateFirstRound(tournamentId, times, req.user._id);
 
   res.status(200).json({
-    message: 'Tournament started successfully',
-    status: tournament.status,
+    message: 'First round created with custom match times',
     matches
   });
 });
-
 
 
 //! for owner to update match result
@@ -250,6 +260,7 @@ const getTournamentMatchesByRound = catchError(async (req, res, next) => {
 
 
 export { 
+  markTournamentOngoing,
     startTournament,
     updateMatchResult,
     advanceTournamentRound,

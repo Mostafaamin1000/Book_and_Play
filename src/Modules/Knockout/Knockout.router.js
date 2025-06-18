@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { advanceTournamentRound, getPlayedMatchesWithWinners, getTournamentMatchesByRound, getWinnersOfRound, startTournament, updateMatchResult } from './Knockout.controller.js';
+import { advanceTournamentRound, getPlayedMatchesWithWinners, getTournamentMatchesByRound, getWinnersOfRound, markTournamentOngoing, startTournament, updateMatchResult } from './Knockout.controller.js';
 import { allowTo, protectedRouter } from '../auth/auth.controller.js';
 
 const knockoutRouter = Router();
 //! start the tournament
-knockoutRouter.post('/tournament/:tournamentId/start', startTournament);
+knockoutRouter.post('/tournament/:tournamentId/start', protectedRouter, allowTo('owner'), markTournamentOngoing);
+knockoutRouter.post('/tournament/:tournamentId/generate-first-round', startTournament);
 //! update the match result
 knockoutRouter.patch('/match/:matchId/result',protectedRouter , allowTo('owner') ,updateMatchResult);
 //! advance the tournament round
