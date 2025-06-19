@@ -8,14 +8,19 @@ const markTournamentOngoing = catchError(async (req, res, next) => {
   const userId = req.user._id;
 
   const tournament = await Tournament.findById(tournamentId);
-  if (!tournament) throw new AppError('Tournament not found', 404);
+  if (!tournament) return next( new AppError('Tournament not found', 404));
 
   if (String(tournament.createdBy) !== String(userId)) {
-    throw new AppError('You are not authorized to modify this tournament', 403);
+    return next( new AppError('You are not authorized to modify this tournament', 403));
+  }
+   
+  const teams = tournament.teams;
+  if (![4, 8, 16].includes(teams.length)) {
+    return next( new AppError('Number of teams must be 4, 8, or 16', 400));
   }
 
   if (tournament.status !== 'upcoming') {
-    throw new AppError(`Tournament is already ${tournament.status}`, 400);
+    return next( new AppError(`Tournament is already ${tournament.status}`, 400));
   }
 
   tournament.status = 'ongoing';
