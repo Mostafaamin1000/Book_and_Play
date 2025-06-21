@@ -1,15 +1,17 @@
 import { Router } from 'express';
-import { advanceTournamentRound, getPlayedMatchesWithWinners, getTournamentMatchesByRound, getWinnersOfRound, markTournamentOngoing, startTournament, updateMatchResult } from './Knockout.controller.js';
+import {  generateOrAdvanceRound, getPlayedMatchesWithWinners, getTournamentMatchesByRound, getWinnersOfRound, markTournamentOngoing,  updateMatchResult } from './Knockout.controller.js';
 import { allowTo, protectedRouter } from '../auth/auth.controller.js';
 
 const knockoutRouter = Router();
 //! start the tournament
 knockoutRouter.patch('/tournament/:tournamentId/start', protectedRouter, allowTo('owner'), markTournamentOngoing);
-knockoutRouter.post('/tournament/:tournamentId/generate-first-round', startTournament);
+//! generate the round
+knockoutRouter.post('/tournaments/:tournamentId/generate', protectedRouter, allowTo('owner'), generateOrAdvanceRound);
+// knockoutRouter.post('/tournament/:tournamentId/generate-first-round', startTournament);
 //! update the match result
 knockoutRouter.patch('/match/:matchId/result',protectedRouter , allowTo('owner') ,updateMatchResult);
 //! advance the tournament round
-knockoutRouter.post('/tournament/:tournamentId/advance', advanceTournamentRound);
+// knockoutRouter.post('/tournament/:tournamentId/advance', advanceTournamentRound);
 //! get all matches of tournament in each round
 knockoutRouter.get('/tournaments/:tournamentId/matches', getTournamentMatchesByRound)
 //! get the winner of each round

@@ -86,6 +86,36 @@ const getTournamentDetails = catchError(async (req, res, next) => {
     }
   }
 
+const allMatches = await TournamentMatch.find({ tournament: tournament._id });
+  
+const roundPriority = ['round_of_16', 'quarterfinal', 'semifinal', 'final'];
+let current_round = 'not_started';
+
+  if (tournament.status === 'finished') {
+    current_round = 'finished';
+  } else if (allMatches.length === 0) {
+    current_round = 'not_started';
+  } else {
+    for (let i = roundPriority.length - 1; i >= 0; i--) {
+      const round = roundPriority[i];
+      const roundMatches = allMatches.filter(m => m.round === round);
+
+      if (roundMatches.length > 0) {
+        const allPlayed = roundMatches.every(m => m.status === 'played');
+        if (!allPlayed) {
+          current_round = round;
+          break;
+        } else if (i === roundPriority.length - 1) {
+          current_round = 'finished';
+        } else {
+          current_round = roundPriority[i + 1]; 
+          break;
+        }
+      }
+    }
+  }
+
+
   res.status(200).json({
     tournament: {
       _id: tournament._id,
@@ -100,6 +130,7 @@ const getTournamentDetails = catchError(async (req, res, next) => {
       status: tournament.status,
       teams: tournament.teams,
       winner: winnerTeam,
+      current_round
     }
   });
 });
@@ -112,7 +143,36 @@ const getTournamentById = catchError(async (req, res, next) => {
 
   if (!tournament) return next(new AppError("Tournament not found", 404));
 
-  res.status(200).json({ message: "Tournament details", tournament });
+    const allMatches = await TournamentMatch.find({ tournament: tournament._id });
+
+  const roundPriority = ['round_of_16', 'quarterfinal', 'semifinal', 'final'];
+  let current_round = 'not_started';
+
+  if (tournament.status === 'finished') {
+    current_round = 'finished';
+  } else if (allMatches.length === 0) {
+    current_round = 'not_started';
+  } else {
+    for (let i = roundPriority.length - 1; i >= 0; i--) {
+      const round = roundPriority[i];
+      const roundMatches = allMatches.filter(m => m.round === round);
+
+      if (roundMatches.length > 0) {
+        const allPlayed = roundMatches.every(m => m.status === 'played');
+        if (!allPlayed) {
+          current_round = round;
+          break;
+        } else if (i === roundPriority.length - 1) {
+          current_round = 'finished';
+        } else {
+          current_round = roundPriority[i + 1];
+          break;
+        }
+      }
+    }
+  }
+
+  res.status(200).json({ message: "Tournament details", tournament , current_round });
 })
 
 const getAllTournaments = catchError(async (req, res, next) => {
