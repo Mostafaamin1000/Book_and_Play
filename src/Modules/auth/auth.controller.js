@@ -35,28 +35,36 @@ const changeUserPassword =catchError( async(req,res,next)=>{
         })
     })
 
-const protectedRouter=catchError(async (req,res,next)=>{
-    let {token}= req.headers
-    let userPayload= null
-    if(!token) return next(new AppError('Token not provided..',401))
-        jwt.verify(token,process.env.SECRET_KEY,(err,payload)=>{
-    if(err) return next(new AppError(err,401))
-        userPayload=payload
-        })
-let user = await User.findById(userPayload.userId)
-if(!user) return next(new AppError('user not found..',401))
+const protectedRouter = catchError(async (req, res, next) => {
+  const { token } = req.headers;
+  if (!token) return next(new AppError('Token not provided..', 401));
 
-    if(user.passwordChangedAt){
-    let time = parseInt(user.passwordChangedAt.getTime() /1000)
-if(time > userPayload.iat) return next(new AppError('invalid token,signin again..',401))
-}   
-req.user=user
-next()                          
-})
+  let userPayload;
+  try {
+    userPayload = jwt.verify(token, process.env.SECRET_KEY); // 👈 sync version
+  } catch (err) {
+    return next(new AppError(err.message, 401));
+  }
+
+  const user = await User.findById(userPayload.userId);
+  if (!user) return next(new AppError('User not found..', 401));
+
+  if (user.passwordChangedAt) {
+    const time = parseInt(user.passwordChangedAt.getTime() / 1000);
+    if (time > userPayload.iat) {
+      return next(new AppError('Invalid token, sign in again..', 401));
+    }
+  }
+
+  req.user = user;
+  next();
+});
+
 
 const allowTo =(...roles)=>{
     return catchError((req,res,next)=>{
 if(roles.includes(req.user.role)){
+    console.log("ROLE IS:", req.user.role);
 return next()
 }
 return next(new AppError('you are not authorized to access this endpoint..',401))

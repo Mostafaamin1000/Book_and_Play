@@ -3,35 +3,6 @@ import { TournamentMatch } from "../../../DB/Models/TournamentMatch.schema.js";
 import { catchError } from "../../middlewares/catchError.js";
 import { AppError } from "../../utils/appError.js";
 
-const markTournamentOngoing = catchError(async (req, res, next) => {
-  const { tournamentId } = req.params;
-  const userId = req.user._id;
-
-  const tournament = await Tournament.findById(tournamentId);
-  if (!tournament) return next( new AppError('Tournament not found', 404));
-
-  if (String(tournament.createdBy) !== String(userId)) {
-    return next( new AppError('You are not authorized to modify this tournament', 403));
-  }
-   
-  const teams = tournament.teams;
-  if (![4, 8, 16].includes(teams.length)) {
-    return next( new AppError('Number of teams must be 4, 8, or 16', 400));
-  }
-
-  if (tournament.status !== 'upcoming') {
-    return next( new AppError(`Tournament is already ${tournament.status}`, 400));
-  }
-
-  tournament.status = 'ongoing';
-  await tournament.save();
-
-  res.status(200).json({
-    message: 'Tournament status updated to ongoing',
-    status: tournament.status
-  });
-});
-
 const generateOrAdvanceRound = catchError(async (req, res, next) => {
   const { tournamentId } = req.params;
   const { times } = req.body;
@@ -56,7 +27,7 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
 
   const allMatches = await TournamentMatch.find({ tournament: tournament._id }).sort({ createdAt: 1 });
 
-  // No matches exist → generate first round
+  // ✅ لو دي أول راوند نولّد الماتشات ونغير الحالة لـ ongoing
   if (allMatches.length === 0) {
     const numberOfMatches = teams.length / 2;
     if (!Array.isArray(times) || times.length !== numberOfMatches) {
@@ -87,11 +58,15 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
       });
     }
 
+    // ✅ تحديث الحالة إلى "ongoing"
+    tournament.status = 'ongoing';
+    await tournament.save();
+
     const created = await TournamentMatch.insertMany(matches);
     return res.status(200).json({ message: `First round (${firstRound}) generated`, matches: created });
   }
 
-  // Matches exist → try to generate next round
+  // ✅ راوند موجود → نولّد اللي بعده
   const roundProgression = {
     round_of_16: 'quarterfinal',
     quarterfinal: 'semifinal',
@@ -105,7 +80,13 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
   if (!allPlayed) return next(new AppError("Not all matches in current round are completed", 400));
 
   const nextRound = roundProgression[lastRound];
-  if (!nextRound) return next(new AppError("Tournament already finished", 400));
+
+  // ✅ لو مفيش راوند بعد كده → البطولة خلصت
+  if (!nextRound) {
+    tournament.status = 'finished';
+    await tournament.save();
+    return res.status(200).json({ message: "Tournament finished", status: "finished" });
+  }
 
   const winners = lastRoundMatches.map(m => m.winner).sort(() => Math.random() - 0.5);
   if (!Array.isArray(times) || times.length !== winners.length / 2) {
@@ -131,74 +112,6 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
   const createdNext = await TournamentMatch.insertMany(nextMatches);
   return res.status(200).json({ message: `Next round (${nextRound}) generated`, matches: createdNext });
 });
-
-
-// const generateFirstRound = catchError(async (tournamentId, times, userId) => {
-//   const tournament = await Tournament.findById(tournamentId).populate('teams');
-
-//   if (!tournament) throw new AppError('Tournament not found', 404);
-//   if (String(tournament.createdBy) !== String(userId)) {
-//     throw new AppError('You are not authorized to modify this tournament', 403);
-//   }
-//   if (!tournament.field_ids || tournament.field_ids.length === 0) {
-//     throw new AppError('No fields associated with this tournament', 400);
-//   }
-
-//   const teams = tournament.teams;
-//   if (![4, 8, 16].includes(teams.length)) {
-//     throw new AppError('Number of teams must be 4, 8, or 16', 400);
-//   }
-
-//   const numberOfMatches = teams.length / 2;
-
-//   if (!Array.isArray(times) || times.length !== numberOfMatches) {
-//     throw new AppError(`You must provide ${numberOfMatches} match times`, 400);
-//   }
-
-//   const roundMap = {
-//     4: 'semifinal',
-//     8: 'quarterfinal',
-//     16: 'round_16'
-//   };
-
-//   const firstRound = roundMap[teams.length];
-//   const shuffledTeams = teams.sort(() => Math.random() - 0.5);
-
-//   const matches = [];
-//   for (let i = 0; i < shuffledTeams.length; i += 2) {
-//     const teamA = shuffledTeams[i];
-//     const teamB = shuffledTeams[i + 1];
-//     const matchTime = times[i / 2]; 
-
-//     matches.push({
-//       tournament: tournament._id,
-//       round: firstRound,
-//       fieldId: tournament.field_ids[0],
-//       date: tournament.start_date,
-//       time: {
-//         start: matchTime.start,
-//         end: matchTime.end
-//       },
-//       teamA: teamA._id,
-//       teamB: teamB._id
-//     });
-//   }
-
-//   const createdMatches = await TournamentMatch.insertMany(matches);
-//   return createdMatches;
-// });
-
-// const startTournament = catchError(async (req, res, next) => {
-//   const { tournamentId } = req.params;
-//   const { times } = req.body;
-
-//   const matches = await generateFirstRound(tournamentId, times, req.user._id);
-
-//   res.status(200).json({
-//     message: 'First round created with custom match times',
-//     matches
-//   });
-// });
 
 
 //! for owner to update match result
@@ -236,54 +149,6 @@ const updateMatchResult = catchError(async (req, res, next) => {
   });
 });
 
-
-// const generateNextRound = async (tournamentId, currentRound, time) => {
-//   const matches = await TournamentMatch.find({
-//     tournament: tournamentId,
-//     round: currentRound,
-//     status: 'played'
-//   });
-
-//   const allPlayed = matches.length > 0 && matches.every(match => match.winner);
-//   if (!allPlayed) throw new AppError("Not all matches are completed", 400);
-
-//   const nextRound = roundProgression[currentRound];
-//   if (!nextRound) throw new AppError("Tournament is already completed", 400);
-
-//   const winners = matches.map(m => m.winner).sort(() => Math.random() - 0.5);
-
-//   const nextMatches = [];
-
-//   for (let i = 0; i < winners.length; i += 2) {
-//     nextMatches.push({
-//       tournament: tournamentId,
-//       round: nextRound,
-//       fieldId: matches[0].fieldId, 
-//       date: new Date(), 
-//       time: {
-//         start: time.start,
-//         end: time.end
-//       },
-//       teamA: winners[i],
-//       teamB: winners[i + 1]
-//     });
-//   }
-
-//   const createdMatches = await TournamentMatch.insertMany(nextMatches);
-//   return createdMatches;
-// };
-
-// const advanceTournamentRound = catchError(async (req, res, next) => {
-//   const { tournamentId } = req.params;
-//   const { currentRound, time } = req.body;
-
-//   const newMatches = await generateNextRound(tournamentId, currentRound, time);
-
-//   res.status(200).json({
-//     message: `Next round (${newMatches[0]?.round}) generated`,
-//     matches: newMatches
-//   });
-// });
 
 const getWinnersOfRound = catchError(async (req, res, next) => {
   const { tournamentId } = req.params;
@@ -360,11 +225,8 @@ const getTournamentMatchesByRound = catchError(async (req, res, next) => {
 
 
 export { 
-  markTournamentOngoing,
-    // startTournament,
     generateOrAdvanceRound,
     updateMatchResult,
-    // advanceTournamentRound,
     getWinnersOfRound ,
     getPlayedMatchesWithWinners,
     getTournamentMatchesByRound
