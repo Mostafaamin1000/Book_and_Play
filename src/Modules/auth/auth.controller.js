@@ -19,7 +19,7 @@ const signin =catchError( async(req,res,next)=>{
     if(!user) return next(new AppError('Email or Password incorrect ..',404))
     let match = bcrypt.compare(req.body.password , user.password )
     if(!match) return next(new AppError('Email or Password incorrect...',404))
-jwt.sign({userId:user._id , name:user.name, role:user.role }, process.env.SECRET_KEY , (err,token)=>{
+jwt.sign({userId:user._id , name:user.name, role:user.role ,institution: user.institution  }, process.env.SECRET_KEY , (err,token)=>{
     res.status(200).json({message:"Login Successfully  ..", token, user }  )
 })})
     
@@ -56,7 +56,12 @@ const protectedRouter = catchError(async (req, res, next) => {
     }
   }
 
-  req.user = user;
+req.user = {
+    _id: user._id,
+    name: user.name,
+    role: user.role,
+    institution: user.institution 
+  };
   next();
 });
 

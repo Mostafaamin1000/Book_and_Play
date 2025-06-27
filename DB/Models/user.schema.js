@@ -30,6 +30,7 @@ const schema = new Schema({
         enum: ['player','owner'],
         default: 'player'
     },
+    institution: { type: String},
     match: [{
         type: Schema.Types.ObjectId,
         ref: 'Match'

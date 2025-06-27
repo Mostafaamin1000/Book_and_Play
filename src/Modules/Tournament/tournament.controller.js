@@ -68,7 +68,8 @@ const getTournamentDetails = catchError(async (req, res, next) => {
       path: 'teams',  
       select: 'name logo members',
     })
-    .populate('createdBy', 'name');
+    .populate('createdBy', 'name')
+    .populate('field_ids', 'name location');
 
   if (!tournament) {
     return next(new AppError('Tournament not found', 404));
@@ -127,6 +128,7 @@ let current_round = 'not_started';
       is_private: tournament.is_private,
       institution: tournament.institution,
       createdBy: tournament.createdBy,
+      fields: tournament.field_ids,
       status: tournament.status,
       teams: tournament.teams,
       winner: winnerTeam,
@@ -178,6 +180,7 @@ const getTournamentById = catchError(async (req, res, next) => {
 const getAllTournaments = catchError(async (req, res, next) => {
   const tournaments = await Tournament.find()
     .populate('createdBy', 'name')
+    .populate('field_ids', 'name location')
     .sort({ createdAt: -1 });
 
   res.status(200).json({ message: "All tournaments", tournaments });
