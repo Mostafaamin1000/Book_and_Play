@@ -1,5 +1,6 @@
 import { Team } from "../../../DB/Models/team.schema.js";
 import { Tournament } from "../../../DB/Models/tournament.schema.js";
+import { User } from "../../../DB/Models/user.schema.js";
 import { catchError } from "../../middlewares/catchError.js";
 import { AppError } from "../../utils/appError.js";
 
@@ -45,8 +46,12 @@ const addMemberToTeam = catchError(async (req, res, next) => {
   const { teamId, memberId } = req.body;
   const userId = req.user._id;
 
-  const team = await Team.findById(teamId).populate("tournament");
-  if (!team) return next(new AppError("Team not found", 404));
+const team = await Team.findById(teamId).populate("tournament").populate("members", "name email");
+if (!team) return next(new AppError("Team not found", 404));
+
+const member = await User.findById(memberId);
+if (!member) {
+return next(new AppError("User to add not found", 404))}
 
   if (team.createdBy.toString() !== userId.toString()) {
     return next(new AppError("Only the team creator can add members", 403))}
@@ -67,7 +72,7 @@ const addMemberToTeam = catchError(async (req, res, next) => {
 
   team.members.push(memberId);
   await team.save();
-
+  await team.populate("members", "name email");
   res.status(200).json({
     message: "Member added successfully",
     team,

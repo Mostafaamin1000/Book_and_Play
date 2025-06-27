@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import { createTournament, deleteTournament, getAllTournaments, getTournamentById, getTournamentDetails, registerTeamToTournament, updateTournament } from './tournament.controller.js';
+import { createTournament, deleteTournament, getAllTournaments, getTournamentById, getTournamentDetails, getTournamentsOnMyFields, registerTeamToTournament, updateTournament } from './tournament.controller.js';
 import { allowTo, protectedRouter } from '../auth/auth.controller.js';
 
 const tournamentRouter = Router()
@@ -7,6 +7,7 @@ const tournamentRouter = Router()
 
 tournamentRouter.post('/create',protectedRouter,allowTo('owner'),createTournament)
 tournamentRouter.post('/:id/register',protectedRouter,allowTo('owner','player'),registerTeamToTournament)
+tournamentRouter.get('/my-field-tournaments',protectedRouter,allowTo('owner'),getTournamentsOnMyFields)
 tournamentRouter.get('/details/:id',getTournamentDetails)
 tournamentRouter.get('/all',getAllTournaments)
 tournamentRouter.get('/:id',getTournamentById)

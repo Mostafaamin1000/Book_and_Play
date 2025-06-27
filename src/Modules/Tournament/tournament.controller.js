@@ -1,3 +1,4 @@
+import { Field } from "../../../DB/Models/fields.schema.js";
 import { Team } from "../../../DB/Models/team.schema.js";
 import { Tournament } from "../../../DB/Models/tournament.schema.js";
 import { TournamentMatch } from "../../../DB/Models/TournamentMatch.schema.js";
@@ -35,6 +36,29 @@ import { AppError } from "../../utils/appError.js";
   await tournament.save();
   res.status(201).json({ message: "Tournament created", tournament });
 })
+
+const getTournamentsOnMyFields = catchError(async (req, res, next) => {
+  const userId = req.user._id;
+
+  // ❶ هات الملاعب بتاعت الأونر
+  const myFields = await Field.find({ createdBy: userId }).select('_id');
+  const myFieldIds = myFields.map(f => f._id);
+
+  // ❷ هات البطولات اللي هو أنشأها وعلى ملاعبه
+  const tournaments = await Tournament.find({
+    createdBy: userId,
+    field_ids: { $in: myFieldIds }
+  })
+  .populate('field_ids')  // optional: populate details of fields
+  .populate('teams');     // optional: populate teams if needed
+
+  res.status(200).json({
+    status: 'success',
+    results: tournaments.length,
+    tournaments,
+  });
+});
+
 
 const registerTeamToTournament = catchError(async (req, res, next) => {
   const { id: tournamentId } = req.params;
@@ -213,6 +237,7 @@ const deleteTournament = catchError(async (req, res, next) => {
 export{
     createTournament,
     registerTeamToTournament,
+    getTournamentsOnMyFields,
     getTournamentDetails,
     getTournamentById,
     getAllTournaments,
