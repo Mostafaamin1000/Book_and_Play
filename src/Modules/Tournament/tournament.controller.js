@@ -40,17 +40,15 @@ import { AppError } from "../../utils/appError.js";
 const getTournamentsOnMyFields = catchError(async (req, res, next) => {
   const userId = req.user._id;
 
-  // ❶ هات الملاعب بتاعت الأونر
-  const myFields = await Field.find({ createdBy: userId }).select('_id');
+  const myFields = await Field.find({ owner: userId }).select('_id');
   const myFieldIds = myFields.map(f => f._id);
 
-  // ❷ هات البطولات اللي هو أنشأها وعلى ملاعبه
   const tournaments = await Tournament.find({
     createdBy: userId,
     field_ids: { $in: myFieldIds }
   })
-  .populate('field_ids')  // optional: populate details of fields
-  .populate('teams');     // optional: populate teams if needed
+  .populate('field_ids')  
+  .populate('teams');   
 
   res.status(200).json({
     status: 'success',
