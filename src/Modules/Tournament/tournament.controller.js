@@ -34,6 +34,11 @@ import { AppError } from "../../utils/appError.js";
   });
 
   await tournament.save();
+   if (is_private) {
+    await User.findByIdAndUpdate(req.user._id, {
+      institution: institution
+    });
+  }
   res.status(201).json({ message: "Tournament created", tournament });
 })
 
