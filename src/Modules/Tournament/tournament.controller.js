@@ -2,6 +2,7 @@ import { Field } from "../../../DB/Models/fields.schema.js";
 import { Team } from "../../../DB/Models/team.schema.js";
 import { Tournament } from "../../../DB/Models/tournament.schema.js";
 import { TournamentMatch } from "../../../DB/Models/TournamentMatch.schema.js";
+import { User } from "../../../DB/Models/user.schema.js";
 import { catchError } from "../../middlewares/catchError.js";
 import { AppError } from "../../utils/appError.js";
 
