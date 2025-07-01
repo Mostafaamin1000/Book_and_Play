@@ -19,15 +19,5 @@ const schema = new Schema({
   });
 
 
-//   schema.virtual('players', {
-//     ref:"User",
-//     localField:"_id",
-//     foreignField:"match"
-// })
-
-// schema.pre(/^find/,function (){
-//     this.populate('players');
-//     })
-
   schema.index({ location: '2dsphere' });
   export const Match = model('Match', schema);
