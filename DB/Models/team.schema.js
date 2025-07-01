@@ -1,7 +1,7 @@
 import mongoose , { Schema,model } from 'mongoose';
 
 const teamSchema = new Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, unique: true  },
   logo: { type: String }, 
   members: [{
     type: Schema.Types.ObjectId,

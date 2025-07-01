@@ -6,7 +6,7 @@ const tournamentSchema = new Schema({
   start_date: { type: Date, required: true },
   end_date: { type: Date, required: true },
   max_teams: { type: Number, required: true },
-  field_ids: [{ type: Schema.Types.ObjectId, ref: 'Field' }],
+  field_ids: [{ type: Schema.Types.ObjectId, ref: 'Field' , required: true }],
   is_private: { type: Boolean, default: false },
   institution: { type: String },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
