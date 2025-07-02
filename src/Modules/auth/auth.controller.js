@@ -17,23 +17,38 @@ const signup =catchError( async(req,res,next)=>{
 const signin =catchError( async(req,res,next)=>{
     let user =await User.findOne({email : req.body.email})
     if(!user) return next(new AppError('Email or Password incorrect ..',404))
-    let match = bcrypt.compare(req.body.password , user.password )
+    let match =await bcrypt.compare(req.body.password , user.password )
     if(!match) return next(new AppError('Email or Password incorrect...',404))
 jwt.sign({userId:user._id , name:user.name, role:user.role ,institution: user.institution  }, process.env.SECRET_KEY , (err,token)=>{
     res.status(200).json({message:"Login Successfully  ..", token, user }  )
 })})
     
 
-const changeUserPassword =catchError( async(req,res,next)=>{
-    let user =await User.findOne({email : req.body.email})
-    if(!user) return next(new AppError('Email or Password incorrect ..',404))
-    let match = bcrypt.compareSync(req.body.oldPassword , user.password )
-    if(!match) return next(new AppError('Email or Password incorrect ..',404))
-    await User.findOneAndUpdate({email : req.body.email},{password: req.body.newPassword , passwordChangedAt:Date.now()})
-    jwt.sign({userId:user._id , name:user.name, role:user.role }, process.env.SECRET_KEY , (err,token)=>{
-            res.status(200).json({message:"Login Successfully  ..", token, user}  )
-        })
-    })
+const changeUserPassword = catchError(async (req, res, next) => {
+  const { email, oldPassword, newPassword } = req.body;
+
+  const user = await User.findOne({ email }).select('+password');
+  if (!user) return next(new AppError('Email or Password incorrect ..', 404));
+  const match = await bcrypt.compare(oldPassword, user.password);
+  if (!match) return next(new AppError('Email or Password incorrect...', 404));
+  await User.findOneAndUpdate(
+    { email },
+    { password: newPassword, passwordChangedAt: Date.now() }
+  );
+  const updatedUser = await User.findOne({ email });
+  jwt.sign(
+    { userId: updatedUser._id, name: updatedUser.name, role: updatedUser.role },
+    process.env.SECRET_KEY,
+    (err, token) => {
+      res.status(200).json({
+        message: "Password changed successfully",
+        token,
+        user: updatedUser
+      });
+    }
+  );
+});
+
 
 const protectedRouter = catchError(async (req, res, next) => {
   const { token } = req.headers;

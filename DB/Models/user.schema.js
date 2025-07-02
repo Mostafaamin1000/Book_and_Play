@@ -45,8 +45,12 @@ schema.pre('save', async function (next) {
   next();
 });
 
-schema.pre('findOneAndUpdate',function(){
-    if(this._update.password)  this._update.password =bcrypt.hashSync(this._update.password , 10)
-    })
+schema.pre('findOneAndUpdate', async function (next) {
+  if (this._update.password) {
+    this._update.password = await bcrypt.hash(this._update.password, 10);
+  }
+  next();
+});
+
 schema.index({ location: '2dsphere' });
 export const User= model('User', schema);
