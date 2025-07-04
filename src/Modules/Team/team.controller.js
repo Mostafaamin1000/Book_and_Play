@@ -5,7 +5,7 @@ import { catchError } from "../../middlewares/catchError.js";
 import { AppError } from "../../utils/appError.js";
 
 const createTeam = catchError(async (req, res, next) => {
-  const { name, tournamentId } = req.body;
+  const { name, tournamentId  } = req.body;
   const userId = req.user._id;
   const logo = req.file?.path; 
 
@@ -72,7 +72,7 @@ return next(new AppError("User to add not found", 404))}
 
   team.members.push(memberId);
   await team.save();
-  await team.populate("members", "name email");
+  await team.populate("members", "name email phone");
   res.status(200).json({
     message: "Member added successfully",
     team,
@@ -117,7 +117,7 @@ const removeMemberFromTeam = catchError(async (req, res, next) => {
 
 const getTeamsByTournament = catchError(async (req, res, next) => {
   const { tournamentId } = req.params
-  const tournament = await Tournament.findById(tournamentId).populate('teams');
+  const tournament = await Tournament.findById(tournamentId).populate('teams')
   if (!tournament) {
     return next(new AppError('Tournament not found', 404))}
 
@@ -128,8 +128,9 @@ const getTeamsByTournament = catchError(async (req, res, next) => {
 
 const getTeamById = catchError(async (req, res, next) => {
   const team = await Team.findById(req.params.id)
-    .populate('members', 'name email') 
-    .populate('tournament', 'name');
+    .populate('members', 'name email phone') 
+    .populate('tournament', 'name')
+
 
   if (!team) {
     return next(new AppError('Team not found', 404)) }

@@ -11,6 +11,8 @@ const schema = new Schema({
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], required: true }, // [lng, lat]
     },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    substitutes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     max_players: Number,
     current_players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     status: { type: String, enum: ['open', 'full'], default: 'open' },

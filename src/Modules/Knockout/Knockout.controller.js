@@ -27,7 +27,6 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
 
   const allMatches = await TournamentMatch.find({ tournament: tournament._id }).sort({ createdAt: 1 });
 
-  // ✅ لو دي أول راوند نولّد الماتشات ونغير الحالة لـ ongoing
   if (allMatches.length === 0) {
     const numberOfMatches = teams.length / 2;
     if (!Array.isArray(times) || times.length !== numberOfMatches) {
@@ -58,7 +57,6 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
       });
     }
 
-    // ✅ تحديث الحالة إلى "ongoing"
     tournament.status = 'ongoing';
     await tournament.save();
 
@@ -66,7 +64,6 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
     return res.status(200).json({ message: `First round (${firstRound}) generated`, matches: created });
   }
 
-  // ✅ راوند موجود → نولّد اللي بعده
   const roundProgression = {
     round_of_16: 'quarterfinal',
     quarterfinal: 'semifinal',
@@ -81,7 +78,6 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
 
   const nextRound = roundProgression[lastRound];
 
-  // ✅ لو مفيش راوند بعد كده → البطولة خلصت
   if (!nextRound) {
     tournament.status = 'finished';
     await tournament.save();
@@ -106,7 +102,7 @@ const generateOrAdvanceRound = catchError(async (req, res, next) => {
       },
       teamA: winners[i],
       teamB: winners[i + 1]
-    });
+        });
   }
 
   const createdNext = await TournamentMatch.insertMany(nextMatches);
@@ -200,6 +196,7 @@ const getTournamentMatchesByRound = catchError(async (req, res, next) => {
     .populate('teamA', 'name logo')
     .populate('teamB', 'name logo')
     .populate('winner', 'name logo')
+    .populate('substitutes', 'name email')
     .sort({ date: 1 });
 
   const grouped = {

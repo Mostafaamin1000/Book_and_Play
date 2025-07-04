@@ -19,53 +19,90 @@ const resetOldMatches = async () => {
 
 
 const addMatch = catchError(async (req, res, next) => {
- const { date, time, fieldId, location, max_players } = req.body
+ const { date, time, fieldId, location, max_players ,substitutes } = req.body
 
   // Run cleanup of old matches before adding new one
   await resetOldMatches()
   const match = await Match.create({
-    date,
-    time,
-    fieldId,
-    location,
-    max_players,
-    current_players: [req.user._id]})
+  date,
+  time,
+  fieldId,
+  location,
+  max_players,
+  current_players: [], 
+  substitutes: substitutes || [],
+  createdBy: req.user._id, 
+})
   res.status(201).json({ message: "Match created successfully", match });
 })
-
 const joinMatch = catchError(async (req, res, next) => {
   const match = await Match.findById(req.params.id);
   if (!match) return next(new AppError("Match not found", 404));
-  if (match.current_players.includes(req.user._id)) {
-    return next(new AppError("You already joined this match", 400)); }
-  if (match.current_players.length >= match.max_players) {
-    match.status = "full";
+
+  const userId = req.user._id;
+
+  const alreadyJoined = match.current_players.includes(userId) || match.substitutes.includes(userId);
+  if (alreadyJoined) {
+    return next(new AppError("You already joined this match", 400));
+  }
+  const MAX_SUBSTITUTES = 4;
+  if (match.current_players.length < match.max_players) {
+    match.current_players.push(userId);
+    if (match.current_players.length >= match.max_players) {
+      match.status = 'full';
+    }
+
     await match.save();
-    return next(new AppError("Match is already full", 400))  }
-  match.current_players.push(req.user._id)
-  if (match.current_players.length >= match.max_players) {
-    match.status = "full" }
-  await match.save();
-  res.status(200).json({ message: "Joined match successfully", match });
-})
+    return res.status(200).json({ message: "Joined match as main player", match });
+  }
+  if (match.substitutes.length < MAX_SUBSTITUTES) {
+    match.substitutes.push(userId);
+    await match.save();
+    return res.status(200).json({ message: "Joined match as substitute", match });
+  }
+  return next(new AppError("Match is already full including substitutes", 400));
+});
+
+
 
 const unjoinMatch = catchError(async (req, res, next) => {
   const matchId = req.params.id;
   const userId = req.user._id;
   const match = await Match.findById(matchId);
   if (!match) return next(new AppError("Match not found", 404));
-  if (!match.current_players.includes(userId)) {
-    return next(new AppError("You are not part of this match", 400));}
-  match.current_players = match.current_players.filter(
-    (playerId) => playerId.toString() !== userId.toString())
-  if (match.status === 'full' && match.current_players.length < match.max_players) {
-    match.status = 'open'}
+ const wasInMain = match.current_players.includes(userId);
+  const wasInSub = match.substitutes.includes(userId);
+
+  if (!wasInMain && !wasInSub) {
+    return next(new AppError("You are not part of this match", 400));
+  }
+
+  if (wasInMain) {
+    match.current_players = match.current_players.filter(
+      (playerId) => playerId.toString() !== userId.toString()
+    );
+
+    if (match.status === 'full' && match.current_players.length < match.max_players) {
+      match.status = 'open';
+    }
+  }
+
+  if (wasInSub) {
+    match.substitutes = match.substitutes.filter(
+      (playerId) => playerId.toString() !== userId.toString()
+    );
+  }
+
   await match.save();
+
   res.status(200).json({
-    message: "You have successfully unjoined the match",
+    message: wasInMain
+      ? "You have successfully unjoined the match as main player"
+      : "You have successfully unjoined the match as substitute",
     match,
-  })
-})
+  });
+});
+
 
 //! get all time slots of matches that are not full
 const getAvailableMatches = catchError(async (req, res, next) => {
@@ -91,13 +128,15 @@ const getUserMatches = catchError(async (req, res, next) => {
 
 //! will use in recommende matches
 const getMatches = catchError(async (req, res, next) => {
-    let apiFeatures = new ApiFeatures(Match.find().populate(['current_players'],'-_id name email phone'), req.query).pagination()
+    let apiFeatures = new ApiFeatures(Match.find().populate(['current_players'],'-_id name email phone').populate('substitutes', 'name email phone'), req.query).pagination()
 const match = await apiFeatures.mongooseQuery;
 res.status(200).json({ message: "Matches found successfully",page:apiFeatures.pageNumber ,match });
 });
 
 const getMatchbyId = catchError(async (req, res, next) => {
-const match = await Match.findById(req.params.id);
+const match = await Match.findById(req.params.id)
+.populate('current_players', 'name email phone')
+.populate('substitutes', 'name email phone');
 match || next(new AppError("Match not found", 404));
 !match || res.status(200).json({ message: "Match found successfully", match });
 });
