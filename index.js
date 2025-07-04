@@ -10,7 +10,8 @@ import { bootstrap } from './src/Modules/bootstrap.js';
 import { dbConnection } from './DB/db.connection.js';
 dotenv.config()
 const app = express()
-const port =process.env.PORT ||  3000
+const port = process.env.PORT || 3000
+const host = process.env.HOST || '0.0.0.0'
 dbConnection()
 app.use('/uploads', express.static('uploads'));
 app.use(express.json())
@@ -34,7 +35,7 @@ process.on('unhandledRejection',(err)=>{   //! for errors outside express
 })
 
 
-app.listen(port ,()=>{
-    console.log(`Server is running on port ${port} ...`);
+app.listen(port, host, ()=>{
+    console.log(`Server is running on http://${host}:${port} ...`);
     
 })
